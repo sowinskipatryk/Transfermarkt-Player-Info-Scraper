@@ -2,9 +2,10 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
 
-url = "https://www.transfermarkt.pl/spieler-statistik/wertvollstespieler/marktwertetop/"
+url = "https://www.transfermarkt.pl/spieler-statistik/wertvollstespieler/marktwertetop?ajax=yw1&page=19"
 
 profile_links_short = []
+
 
 def scrape_page(url):
     print(f'Now scraping: {url}')
@@ -25,6 +26,7 @@ def scrape_page(url):
 
     return soup
 
+
 def get_profile_links(soup):
 
     items = soup.find('table', {'class': 'items'})
@@ -43,9 +45,10 @@ def get_profile_links(soup):
     print(f'Scraped {i} player profile links, {len(profile_links_short)} in total.')
     return
 
+
 def is_next_page(soup):
     try:
-        next_page = soup.find('li', {'class' : 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
+        next_page = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
         next_page_a = next_page.find('a')
         next_page_link = f"https://www.transfermarkt.pl{next_page_a['href']}"
         print('There is a next page with links.\n')
@@ -54,6 +57,7 @@ def is_next_page(soup):
         next_page_link = []
         print('This is the last page with links.\n')
     return next_page, next_page_link
+
 
 def scrape_player_info():
     for link in profile_links_short:
@@ -79,7 +83,7 @@ def scrape_player_info():
             age = []
 
         try:
-            height = round(float((soup.find('span', {'itemprop': 'height'}).text.split()[0]).replace(',','.')),2)
+            height = round(float((soup.find('span', {'itemprop': 'height'}).text.split()[0]).replace(',', '.')), 2)
         except:
             height = []
 
@@ -91,8 +95,9 @@ def scrape_player_info():
             position = []
 
         try:
-            market_value = (' '.join(soup.find('div', {'class': 'dataMarktwert'}).text.replace('\n', '').split()[0:1])).replace(',','.')
-            market_value = round(float(market_value),2)
+            market_value = (' '.join(soup.find('div', {'class': 'dataMarktwert'}).text.replace('\n', '').split()[0:1]))\
+                .replace(',', '.')
+            market_value = round(float(market_value), 2)
         except:
             market_value = []
 
@@ -103,24 +108,30 @@ def scrape_player_info():
 
         player_index = profile_links_short.index(link)+1
         print(f'Scraped {player_index}/{len(profile_links_short)} player profile info page(s).')
-        save_data(player_index, name, nationality, birth_date, age, height, position, market_value, club, profile_link_long)
+        save_data(player_index, name, nationality, birth_date, age, height, position, market_value, club,
+                  profile_link_long)
 
     return
 
-def save_data(player_index, name, nationality, birth_date, age, height, position, market_value, club, profile_link_long):
-    df = pd.DataFrame([player_index, name, nationality, birth_date, age, height, position, market_value, club, profile_link_long]).T
+
+def save_data(player_index, name, nationality, birth_date, age, height, position, market_value, club,
+              profile_link_long):
+    df = pd.DataFrame([player_index, name, nationality, birth_date, age, height, position, market_value, club,
+                       profile_link_long]).T
     df.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
                   'Market Value (mln EUR)', 'Team', 'Profile link']
     df.to_csv('results.csv', mode='a', index=False, header=False)
     print('Data saved in CSV file.\n')
     return
 
+
 def export_to_excel():
-    read_file = pd.read_csv('results.csv',header=None)
+    read_file = pd.read_csv('results.csv', header=None)
     read_file.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
-                  'Market Value (mln EUR)', 'Team', 'Profile link']
+                         'Market Value (mln EUR)', 'Team', 'Profile link']
     read_file.to_excel('results.xlsx', index=None, header=True)
     return
+
 
 soup = scrape_page(url)
 get_profile_links(soup)

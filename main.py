@@ -33,7 +33,7 @@ def get_profile_links(soup):
             profile_link_short = row_tag['href']
             profile_links_short.append(profile_link_short)
             i += 1
-        except:
+        except (AttributeError, TypeError):
             i += 0
 
     print(f'Scraped {i} player profile links, {len(profile_links_short)} in total.')
@@ -47,7 +47,7 @@ def is_next_page(soup):
         next_a = next_p.find('a')
         next_url = f"https://www.transfermarkt{domain}{next_a['href']}"
         print('There is a next page with links.\n')
-    except:
+    except (AttributeError, TypeError):
         next_p = []
         next_url = []
         print('This is the last page with links.\n')
@@ -62,44 +62,44 @@ def scrape_player_info(path):
 
         try:
             name = soup.find('h1', {'itemprop': 'name'}).text
-        except:
+        except (AttributeError, TypeError):
             name = []
 
         try:
             nationality = soup.find('span', {'itemprop': 'nationality'}).text
-        except:
+        except (AttributeError, TypeError):
             nationality = []
 
         try:
             birth_date_full = (soup.find('span', {'itemprop': 'birthDate'}).text.replace('\n', '').strip()).split()
             birth_date = ' '.join(birth_date_full[0:3])
             age = int(birth_date_full[3].replace('(', "").replace(')', ""))
-        except:
+        except (AttributeError, TypeError):
             birth_date = []
             age = []
 
         try:
             height = round(float((soup.find('span', {'itemprop': 'height'}).text.split()[0]).replace(',', '.')), 2)
-        except:
+        except (AttributeError, TypeError):
             height = []
 
         try:
             position_divs = soup.find_all('div', {'class': 'dataDaten'})
             position_spans = position_divs[1].find_all('span', {'class': 'dataValue'})
             position = position_spans[1].text.replace('\n', '').strip()
-        except:
+        except (AttributeError, TypeError):
             position = []
 
         try:
             market_value = (' '.join(soup.find('div', {'class': 'dataMarktwert'}).text.replace('\n', '').split()[0:1]))\
                 .replace(',', '.')
             market_value = round(float(market_value), 2)
-        except:
+        except (AttributeError, TypeError):
             market_value = []
 
         try:
             club = soup.find('span', {'class': 'hauptpunkt'}).text
-        except:
+        except (AttributeError, TypeError):
             club = []
 
         player_index = profile_links_short.index(link)+1
@@ -114,8 +114,9 @@ def save_data(player_index, name, nationality, birth_date, age, height, position
 
     df = pd.DataFrame([player_index, name, nationality, birth_date, age, height, position, market_value, club,
                        profile_link_long]).T
+    # noinspection PyTypeChecker
     df.to_csv('results.csv', mode='a', index=False, header=False)
-    print('Data saved in CSV file.\n')
+    print('Data saved in .csv file.\n')
     return
 
 
@@ -130,8 +131,8 @@ def export_to_excel():
     # # header in polish
     read_file.columns = ['Lp.', 'Gracz', 'Kraj pochodzenia', 'Data urodzenia', 'Wiek', 'Wzrost (m)', 'Pozycja',
                          'Wartość rynkowa (mln EUR)', 'Drużyna', 'Link do profilu']
-    read_file.to_excel('results.xlsx', index=None, header=True)
-    print('Data saved in XLSX file')
+    read_file.to_excel('results_test.xlsx', index=None, header=True)
+    print('Data saved in .xlsx file')
     return
 
 

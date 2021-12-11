@@ -2,28 +2,21 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
 
-url = "https://www.transfermarkt.pl/spieler-statistik/wertvollstespieler/marktwertetop?ajax=yw1&page=19"
+url = "https://www.transfermarkt.pl/spieler-statistik/wertvollstespieler/marktwertetop"
 
 profile_links_short = []
 
 
 def scrape_page(url):
+
     print(f'Now scraping: {url}')
-
     PATH = r'C:\Program Files (x86)\chromedriver.exe'
-
     driver = webdriver.Chrome(PATH)
-
     driver.get(url)
-
     driver.implicitly_wait(5)
-
     page_html = driver.page_source
-
     driver.close()
-
     soup = BeautifulSoup(page_html, 'html.parser')
-
     return soup
 
 
@@ -47,6 +40,7 @@ def get_profile_links(soup):
 
 
 def is_next_page(soup):
+
     try:
         next_page = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
         next_page_a = next_page.find('a')
@@ -60,6 +54,7 @@ def is_next_page(soup):
 
 
 def scrape_player_info():
+
     for link in profile_links_short:
         profile_link_long = f'https://www.transfermarkt.pl{link}'
         soup = scrape_page(profile_link_long)
@@ -110,12 +105,12 @@ def scrape_player_info():
         print(f'Scraped {player_index}/{len(profile_links_short)} player profile info page(s).')
         save_data(player_index, name, nationality, birth_date, age, height, position, market_value, club,
                   profile_link_long)
-
     return
 
 
 def save_data(player_index, name, nationality, birth_date, age, height, position, market_value, club,
               profile_link_long):
+
     df = pd.DataFrame([player_index, name, nationality, birth_date, age, height, position, market_value, club,
                        profile_link_long]).T
     df.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
@@ -126,6 +121,7 @@ def save_data(player_index, name, nationality, birth_date, age, height, position
 
 
 def export_to_excel():
+
     read_file = pd.read_csv('results.csv', header=None)
     read_file.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
                          'Market Value (mln EUR)', 'Team', 'Profile link']

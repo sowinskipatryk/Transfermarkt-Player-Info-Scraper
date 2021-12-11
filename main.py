@@ -2,16 +2,17 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
 
-url = "https://www.transfermarkt.pl/spieler-statistik/wertvollstespieler/marktwertetop"
+domain = '.pl'  # change it if you want your data to be in another language or currency (.us/.co.uk/.de and so on)
+driver_path = r'C:\Program Files (x86)\chromedriver.exe'
+first_page_url = f"https://www.transfermarkt{domain}/spieler-statistik/wertvollstespieler/marktwertetop"
 
-profile_links_short = []
+profile_links_short = []  # for iteration purposes
 
 
-def scrape_page(url):
+def scrape_page(path, url):
 
     print(f'Now scraping: {url}')
-    PATH = r'C:\Program Files (x86)\chromedriver.exe'
-    driver = webdriver.Chrome(PATH)
+    driver = webdriver.Chrome(path)
     driver.get(url)
     driver.implicitly_wait(5)
     page_html = driver.page_source
@@ -42,22 +43,22 @@ def get_profile_links(soup):
 def is_next_page(soup):
 
     try:
-        next_page = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
-        next_page_a = next_page.find('a')
-        next_page_link = f"https://www.transfermarkt.pl{next_page_a['href']}"
+        next_p = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
+        next_a = next_p.find('a')
+        next_url = f"https://www.transfermarkt{domain}{next_a['href']}"
         print('There is a next page with links.\n')
     except:
-        next_page = []
-        next_page_link = []
+        next_p = []
+        next_url = []
         print('This is the last page with links.\n')
-    return next_page, next_page_link
+    return next_p, next_url
 
 
-def scrape_player_info():
+def scrape_player_info(path):
 
     for link in profile_links_short:
-        profile_link_long = f'https://www.transfermarkt.pl{link}'
-        soup = scrape_page(profile_link_long)
+        profile_link_long = f'https://www.transfermarkt{domain}{link}'
+        soup = scrape_page(path, profile_link_long)
 
         try:
             name = soup.find('h1', {'itemprop': 'name'}).text
@@ -113,8 +114,6 @@ def save_data(player_index, name, nationality, birth_date, age, height, position
 
     df = pd.DataFrame([player_index, name, nationality, birth_date, age, height, position, market_value, club,
                        profile_link_long]).T
-    df.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
-                  'Market Value (mln EUR)', 'Team', 'Profile link']
     df.to_csv('results.csv', mode='a', index=False, header=False)
     print('Data saved in CSV file.\n')
     return
@@ -123,20 +122,27 @@ def save_data(player_index, name, nationality, birth_date, age, height, position
 def export_to_excel():
 
     read_file = pd.read_csv('results.csv', header=None)
-    read_file.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
-                         'Market Value (mln EUR)', 'Team', 'Profile link']
+    # # header in english
+
+    # read_file.columns = ['Index', 'Player', 'Country', 'Birth Date', 'Age', 'Height (m)', 'Position',
+    #                      'Market Value (mln EUR)', 'Team', 'Profile link']
+
+    # # header in polish
+    read_file.columns = ['Lp.', 'Gracz', 'Kraj pochodzenia', 'Data urodzenia', 'Wiek', 'Wzrost (m)', 'Pozycja',
+                         'Wartość rynkowa (mln EUR)', 'Drużyna', 'Link do profilu']
     read_file.to_excel('results.xlsx', index=None, header=True)
+    print('Data saved in XLSX file')
     return
 
 
-soup = scrape_page(url)
-get_profile_links(soup)
-next_page, next_page_link = is_next_page(soup)
+player_link_soup = scrape_page(driver_path, first_page_url)
+get_profile_links(player_link_soup)
+next_page_bool, next_page_url = is_next_page(player_link_soup)
 
-while next_page:
-    soup = scrape_page(next_page_link)
-    get_profile_links(soup)
-    next_page, next_page_link = is_next_page(soup)
+while next_page_bool:
+    player_link_soup = scrape_page(driver_path, next_page_url)
+    get_profile_links(player_link_soup)
+    next_page_bool, next_page_url = is_next_page(player_link_soup)
 
-scrape_player_info()
+scrape_player_info(driver_path)
 export_to_excel()

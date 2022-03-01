@@ -46,7 +46,7 @@ def is_next_page(soup):
         next_page = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
         next_a = next_page.find('a')
         next_url = f"https://www.transfermarkt{DOMAIN}{next_a['href']}"
-        print('There is a next page with links.\n')
+        print('There is the next page with links.\n')
     except (AttributeError, TypeError):
         next_page = []
         next_url = []

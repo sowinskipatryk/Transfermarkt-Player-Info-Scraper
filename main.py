@@ -2,9 +2,9 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
 
-domain = '.pl'  # change it if you want your data to be in another language or currency (.us/.co.uk/.de and so on)
-driver_path = r'C:\Program Files (x86)\chromedriver.exe'
-first_page_url = f"https://www.transfermarkt{domain}/spieler-statistik/wertvollstespieler/marktwertetop"
+DOMAIN = '.pl'  # change it if you want your data to be in another language or currency (.us/.co.uk/.de and so on)
+DRIVER_PATH = r'C:\Program Files (x86)\chromedriver.exe'
+FIRST_PAGE_URL = f"https://www.transfermarkt{DOMAIN}/spieler-statistik/wertvollstespieler/marktwertetop"
 
 profile_links_short = []  # for iteration purposes
 
@@ -43,21 +43,21 @@ def get_profile_links(soup):
 def is_next_page(soup):
 
     try:
-        next_p = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
-        next_a = next_p.find('a')
-        next_url = f"https://www.transfermarkt{domain}{next_a['href']}"
+        next_page = soup.find('li', {'class': 'tm-pagination__list-item tm-pagination__list-item--icon-next-page'})
+        next_a = next_page.find('a')
+        next_url = f"https://www.transfermarkt{DOMAIN}{next_a['href']}"
         print('There is a next page with links.\n')
     except (AttributeError, TypeError):
-        next_p = []
+        next_page = []
         next_url = []
         print('This is the last page with links.\n')
-    return next_p, next_url
+    return next_page, next_url
 
 
 def scrape_player_info(path):
 
     for link in profile_links_short:
-        profile_link_long = f'https://www.transfermarkt{domain}{link}'
+        profile_link_long = f'https://www.transfermarkt{DOMAIN}{link}'
         soup = scrape_page(path, profile_link_long)
 
         try:
@@ -136,14 +136,20 @@ def export_to_excel():
     return
 
 
-player_link_soup = scrape_page(driver_path, first_page_url)
-get_profile_links(player_link_soup)
-next_page_bool, next_page_url = is_next_page(player_link_soup)
-
-while next_page_bool:
-    player_link_soup = scrape_page(driver_path, next_page_url)
+def main():
+    player_link_soup = scrape_page(DRIVER_PATH, FIRST_PAGE_URL)
     get_profile_links(player_link_soup)
     next_page_bool, next_page_url = is_next_page(player_link_soup)
 
-scrape_player_info(driver_path)
-export_to_excel()
+    while next_page_bool:
+        player_link_soup = scrape_page(DRIVER_PATH, next_page_url)
+        get_profile_links(player_link_soup)
+        next_page_bool, next_page_url = is_next_page(player_link_soup)
+
+    scrape_player_info(DRIVER_PATH)
+    export_to_excel()
+
+
+if __name__ == '__main__':
+    main()
+    
